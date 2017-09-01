@@ -92,6 +92,7 @@ sahpmlm <- function(formula, data, na.action, g = n, nstep = 200, abstol = 0.000
 
   x     <- X[, -1]
   k     <- ncol(x)   # number of variables
+  n     <- nrow(x)   # sample size
   error <- 1
 
 
