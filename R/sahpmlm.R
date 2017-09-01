@@ -62,7 +62,7 @@
 
 
 sahpmlm <- function(formula, data, na.action, g = n, nstep = 200, abstol = 0.0000001,
-                    replace = FALSE, ...)
+                    replace = FALSE)
 {
   call <- match.call()
   if (missing(data))
@@ -111,6 +111,61 @@ sahpmlm <- function(formula, data, na.action, g = n, nstep = 200, abstol = 0.000
   # A matrix which contains the history of the algorithm. (By columns: Step number,
   # temperature, current objective function value, current minimal objective
   # function value, current model, current highest posterior probability model)
+
+
+  model <- function(current.gamma)
+  {
+    return(paste0(which(current.gamma == 1), collapse = "-"))
+  }
+
+  marginal.likelihood <- function(current.gamma)
+  { # Returns the log of marginal likelihood given in the article
+
+    current.model <- model(current.gamma)
+
+    if(sum(current.model == modelmatrix[, 1]) >= 1)
+    {
+
+      modelmatrix[which(current.model == modelmatrix[, 1]), 2]
+
+      result <- as.numeric(modelmatrix[which(current.model == modelmatrix[, 1]), 2])[1]
+
+    } else {
+
+      subset <- which(current.gamma == 1)
+      x.sub <- x[, subset]
+
+      if(is.vector(x.sub)) {
+        x.sub <- matrix(x.sub, ncol=1)
+        k <- 1} else {
+          k <- ncol(x.sub)
+        }
+
+      if(length(subset) == 0)
+      {
+        regression.fit <- stats::lm(y ~ 1)  # Intercept Regression Model
+      } else {
+
+        regression.fit <- stats::lm(y ~ x.sub)  # Regression Model
+      }
+
+      SSE <- regression.fit$residuals %*% regression.fit$residuals
+
+
+      regression.fit0 <- lm(y ~ 1)  # Intercept Regression Model
+      SSE0            <- stats::anova(regression.fit0)[["Sum Sq"]]
+      # Sum of squared errors for Intercept model
+
+
+      logB0 <- (-(n - 1)/2) * log(1 + g * (SSE/SSE0)) +
+        ((n - k - 1)/2) * log(1 + g)
+
+      result <- -exp(logB0)
+    }
+
+    return(as.numeric(result))  # Highest Posterior model
+
+  }
 
 
   marg.like <- marginal.likelihood(current.gamma)
@@ -248,59 +303,7 @@ sahpmlm <- function(formula, data, na.action, g = n, nstep = 200, abstol = 0.000
 }
 
 
-model <- function(current.gamma)
-{
-  return(paste0(which(current.gamma == 1), collapse = "-"))
-}
 
 
-marginal.likelihood <- function(current.gamma)
-{ # Returns the log of marginal likelihood given in the article
-
-  current.model <- model(current.gamma)
-
-  if(sum(current.model == modelmatrix[, 1]) >= 1)
-  {
-
-    modelmatrix[which(current.model == modelmatrix[, 1]), 2]
-
-    result <- as.numeric(modelmatrix[which(current.model == modelmatrix[, 1]), 2])[1]
-
-  } else {
-
-    subset <- which(current.gamma == 1)
-    x.sub <- x[, subset]
-
-    if(is.vector(x.sub)) {
-      x.sub <- matrix(x.sub, ncol=1)
-      k <- 1} else {
-        k <- ncol(x.sub)
-      }
-
-    if(length(subset) == 0)
-    {
-      regression.fit <- stats::lm(y ~ 1)  # Intercept Regression Model
-    } else {
-
-      regression.fit <- stats::lm(y ~ x.sub)  # Regression Model
-    }
-
-    SSE <- regression.fit$residuals %*% regression.fit$residuals
-
-
-    regression.fit0 <- lm(y ~ 1)  # Intercept Regression Model
-    SSE0            <- stats::anova(regression.fit0)[["Sum Sq"]]
-    # Sum of squared errors for Intercept model
-
-
-    logB0 <- (-(n - 1)/2) * log(1 + g * (SSE/SSE0)) +
-      ((n - k - 1)/2) * log(1 + g)
-
-    result <- -exp(logB0)
-  }
-
-  return(as.numeric(result))  # Highest Posterior model
-
-}
 
 
