@@ -152,7 +152,7 @@ sahpmlm <- function(formula, data, na.action, g = n, nstep = 200, abstol = 0.000
       SSE <- regression.fit$residuals %*% regression.fit$residuals
 
 
-      regression.fit0 <- lm(y ~ 1)  # Intercept Regression Model
+      regression.fit0 <- stats::lm(y ~ 1)  # Intercept Regression Model
       SSE0            <- stats::anova(regression.fit0)[["Sum Sq"]]
       # Sum of squared errors for Intercept model
 
@@ -210,7 +210,7 @@ sahpmlm <- function(formula, data, na.action, g = n, nstep = 200, abstol = 0.000
           model.minus <- utils::combn(current.model, (p - 1))
           full.model <- 1:k
           complement.current.model <- full.model[is.na(pmatch(full.model, current.model))]
-          temp.model <- t(combn(complement.current.model, 1))
+          temp.model <- t(utils::combn(complement.current.model, 1))
           model0 <- NULL
           for(j in 1:ncol(model.minus))
           {
