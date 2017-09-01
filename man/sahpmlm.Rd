@@ -5,7 +5,7 @@
 \title{This implements the stochastic search based on Simulated Anneling strategy.}
 \usage{
 sahpmlm(formula, data, na.action, g = n, nstep = 200, abstol = 1e-07,
-  replace = FALSE, ...)
+  replace = FALSE)
 }
 \arguments{
 \item{formula}{an object of class \code{\link{formula}} (or one that can be
