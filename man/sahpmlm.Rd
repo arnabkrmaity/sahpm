@@ -16,6 +16,12 @@ by \code{\link{as.data.frame}} to a data frame) containing the variables in the
 model. If not found in data, the variables are taken from environment(formula),
 typically the environment from which \code{\link{lm}} is called.}
 
+\item{na.action}{a function which indicates what should happen when the data contain
+\code{NA}s.  The default is set by the \code{na.action} setting of
+\code{\link{options}}, and is \code{\link{na.fail}} if that is unset.
+The \dQuote{factory-fresh} default is \code{\link{na.omit}}.  Another possible
+value is \code{NULL}, no action.  Value \code{\link{na.exclude}} can be useful.}
+
 \item{g}{value of \eqn{g} for \eqn{g} prior. Default is sample size \eqn{n}.}
 
 \item{nstep}{maximum number of steps for simulated annealing search.}
@@ -23,12 +29,6 @@ typically the environment from which \code{\link{lm}} is called.}
 \item{abstol}{desired level of difference of marginal likelihoods between two steps.}
 
 \item{replace}{logical. If \code{TRUE} the replce step is considered in the search.}
-
-\item{a}{function which indicates what should happen when the data contain
-\code{NA}s.  The default is set by the \code{na.action} setting of
-\code{\link{options}}, and is \code{\link{na.fail}} if that is unset.
-The \dQuote{factory-fresh} default is \code{\link{na.omit}}.  Another possible
-value is \code{NULL}, no action.  Value \code{\link{na.exclude}} can be useful.}
 }
 \value{
 \item{final.model}{A column vector which corresponds to the original

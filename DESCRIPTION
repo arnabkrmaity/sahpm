@@ -5,7 +5,7 @@ Authors@R: c(person("Arnab", "Maity", email = "amaity@stat.tamu.edu", role = c("
              person("Sanjib", "Basu", email = "sbasu@uic.edu", role = c("ctb")))
 Description: Highest posterior model is widely accepeted as a good model among available models. In terms of variable selection highest posterior model is often the true model. Our stochastic search process SAHPM based on simulated annealing maximization method tries to find the highest posterior model by maximizing the model space with respect to the posterior probabilities of the models. This package currently contains the SAHPM method only for linear models. The codes for GLM will be added in future.
 Depends: R (>= 3.4.1)
-Imports: stats
+Imports: stats, mvtnorm, utils
 License: GPL-2
 Encoding: UTF-8
 LazyData: true

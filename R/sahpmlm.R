@@ -23,7 +23,7 @@
 #' by \code{\link{as.data.frame}} to a data frame) containing the variables in the
 #' model. If not found in data, the variables are taken from environment(formula),
 #' typically the environment from which \code{\link{lm}} is called.
-#' @param a function which indicates what should happen when the data contain
+#' @param na.action a function which indicates what should happen when the data contain
 #' \code{NA}s.  The default is set by the \code{na.action} setting of
 #' \code{\link{options}}, and is \code{\link{na.fail}} if that is unset.
 #' The \dQuote{factory-fresh} default is \code{\link{na.omit}}.  Another possible
@@ -75,7 +75,7 @@ sahpmlm <- function(formula, data, na.action, g = n, nstep = 200, abstol = 0.000
   mf <- eval(mf, parent.frame())
   mt <- attr(mf, "terms")
 
-  y <- model.response(mf, "numeric")
+  y <- stats::model.response(mf, "numeric")
   if (length(dim(y)) == 1) {
     nm <- rownames(y)
     dim(y) <- NULL
@@ -83,11 +83,11 @@ sahpmlm <- function(formula, data, na.action, g = n, nstep = 200, abstol = 0.000
       names(y) <- nm
   }
 
-  if (is.empty.model(mt)) {
+  if (stats::is.empty.model(mt)) {
     X <- NULL
   }
   else {
-    X <- model.matrix(mt, mf, contrasts)
+    X <- stats::model.matrix(mt, mf, stats::contrasts)
   }
 
   x     <- X[, -1]
@@ -106,7 +106,7 @@ sahpmlm <- function(formula, data, na.action, g = n, nstep = 200, abstol = 0.000
   current.gamma <- rep(0, k)  # gamma (indicator) vector
   # current.gamma <- c(rep(1, 0), rep(0, 10), rep(1, 10), rep(0, 10))
   current.step  <- 1  # Number of steps
-  model.matrix  <- NULL
+  modelmatrix  <- NULL
   trace.matrix <- matrix(NA, nstep, 4)
   # A matrix which contains the history of the algorithm. (By columns: Step number,
   # temperature, current objective function value, current minimal objective
@@ -119,7 +119,7 @@ sahpmlm <- function(formula, data, na.action, g = n, nstep = 200, abstol = 0.000
   current.marg.like <- marg.like
 
 
-  model.matrix <- cbind(99, current.marg.like)
+  modelmatrix <- cbind(99, current.marg.like)
   # This will contain the model and the corresponding marginal likelihood
 
 
@@ -152,7 +152,7 @@ sahpmlm <- function(formula, data, na.action, g = n, nstep = 200, abstol = 0.000
 
         if((p > 0) & (p < k))
         {
-          model.minus <- combn(current.model, (p - 1))
+          model.minus <- utils::combn(current.model, (p - 1))
           full.model <- 1:k
           complement.current.model <- full.model[is.na(pmatch(full.model, current.model))]
           temp.model <- t(combn(complement.current.model, 1))
@@ -189,7 +189,7 @@ sahpmlm <- function(formula, data, na.action, g = n, nstep = 200, abstol = 0.000
 
 
 
-    model.matrix <- rbind(model.matrix,
+    modelmatrix <- rbind(modelmatrix,
                           cbind(proposed.model, proposed.marginal.likelihood))
 
 
@@ -208,7 +208,7 @@ sahpmlm <- function(formula, data, na.action, g = n, nstep = 200, abstol = 0.000
     new.marg.like <- marg.like
     #current.T         <- (k * (new.marg.like - old.marg.like))/log(current.step + 1)
 
-    model.matrix <- rbind(model.matrix,
+    modelmatrix <- rbind(modelmatrix,
                           cbind(new.model, new.marg.like))
 
 
@@ -218,7 +218,7 @@ sahpmlm <- function(formula, data, na.action, g = n, nstep = 200, abstol = 0.000
       current.marg.like <- new.marg.like
     } else {
       temp.prob <- exp(-(new.marg.like - old.marg.like)/current.T)
-      if(rbinom(1, size = 1, temp.prob) == 1)
+      if(stats::rbinom(1, size = 1, temp.prob) == 1)
       {
         current.gamma     <- new.gamma
         current.marg.like <- new.marg.like
@@ -259,12 +259,12 @@ marginal.likelihood <- function(current.gamma)
 
   current.model <- model(current.gamma)
 
-  if(sum(current.model == model.matrix[, 1]) >= 1)
+  if(sum(current.model == modelmatrix[, 1]) >= 1)
   {
 
-    model.matrix[which(current.model == model.matrix[, 1]), 2]
+    modelmatrix[which(current.model == modelmatrix[, 1]), 2]
 
-    result <- as.numeric(model.matrix[which(current.model == model.matrix[, 1]), 2])[1]
+    result <- as.numeric(modelmatrix[which(current.model == modelmatrix[, 1]), 2])[1]
 
   } else {
 
@@ -279,17 +279,17 @@ marginal.likelihood <- function(current.gamma)
 
     if(length(subset) == 0)
     {
-      regression.fit <- lm(y ~ 1)  # Intercept Regression Model
+      regression.fit <- stats::lm(y ~ 1)  # Intercept Regression Model
     } else {
 
-      regression.fit <- lm(y ~ x.sub)  # Regression Model
+      regression.fit <- stats::lm(y ~ x.sub)  # Regression Model
     }
 
     SSE <- regression.fit$residuals %*% regression.fit$residuals
 
 
     regression.fit0 <- lm(y ~ 1)  # Intercept Regression Model
-    SSE0            <- anova(regression.fit0)[["Sum Sq"]]
+    SSE0            <- stats::anova(regression.fit0)[["Sum Sq"]]
     # Sum of squared errors for Intercept model
 
 
