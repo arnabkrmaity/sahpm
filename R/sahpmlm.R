@@ -1,6 +1,12 @@
-#' This implements the stichastic search based on Simulated Anneling strategy
+#' This implements the stochastic search based on Simulated Anneling strategy.
 #'
-#' This implements the stichastic search based on Simulated Anneling strategy.
+#' Highest posterior model is widely accepeted as a good model among available
+#' models. In terms of variable selection highest posterior model is often the true
+#' model. Our stochastic search process SAHPM based on simulated annealing maximization method
+#' tries to find the highest posterior model by maximizing the model space with
+#' respect to the posterior probabilities of the models. This function currently
+#' contains the SAHPM method only for linear models. The codes for GLM will be
+#' added in future.
 #'
 #' The model is:
 #' \deqn{y= \alpha + X\beta+\epsilon, \epsilon \sim N(0,\sigma^2)}
