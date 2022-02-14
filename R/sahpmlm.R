@@ -31,9 +31,9 @@
 #' @param g value of \eqn{g} for \eqn{g} prior. Default is sample size \eqn{n}.
 #' @param nstep maximum number of steps for simulated annealing search.
 #' @param abstol desired level of difference of marginal likelihoods between two steps.
-#' @param replace logical. If \code{TRUE} the replce step is considered in the search.
-#' @param burnin logical. If \code{TRUE} the burnin is added. Number of burnin is specified by the next input.
-#' @param nburnin logical. Number of burnin (required if burnin = TRUE)
+#' @param replace logical. If \code{TRUE} the replce step is considered in the search. Default is FALSE.
+#' @param burnin logical. If \code{TRUE} the burnin is added. Default is FALSE. Number of burnin is specified by the next input.
+#' @param nburnin Number of burnin (required if burnin = TRUE). Default is 50.
 #'
 #'
 #' @return \item{final.model}{A column vector which corresponds to the original
