@@ -32,6 +32,9 @@
 #' @param nstep maximum number of steps for simulated annealing search.
 #' @param abstol desired level of difference of marginal likelihoods between two steps.
 #' @param replace logical. If \code{TRUE} the replce step is considered in the search.
+#' @param burnin logical. If \code{TRUE} the burnin is added. Number of burnin is specified by the next input.
+#' @param nburnin logical. Number of burnin (required if burnin = TRUE)
+#'
 #'
 #' @return \item{final.model}{A column vector which corresponds to the original
 #' variable indices.}
@@ -62,7 +65,7 @@
 
 
 sahpmlm <- function(formula, data, na.action, g = n, nstep = 200, abstol = 0.0000001,
-                    replace = FALSE)
+                    replace = FALSE, burnin = FALSE, nburnin = 50)
 {
   call <- match.call()
   if (missing(data))
@@ -185,6 +188,118 @@ sahpmlm <- function(formula, data, na.action, g = n, nstep = 200, abstol = 0.000
   trace.matrix[1, 4] <- paste0(current.model, collapse = "-")
 
 
+  for(i in 1:50)  # burn-in 50
+  {
+
+    old.marg.like <- current.marg.like
+    set.new.gamma <- matrix(current.gamma, nrow = k, ncol = k)
+    # This will contain full set of next gamma's
+
+
+    for(j in 1:k)
+    {
+      set.new.gamma[j, j] <- 1 - current.gamma[j]
+    }
+
+    # Following will create the set \gamma_0 described in the Hans et al article
+    # The other 2 sets are created in the previous loop.
+
+
+    p <- length(current.model)
+
+    if(p != 0)
+    {
+      model.minus <- combn(current.model, (p - 1))
+      full.model <- 1:k
+      complement.current.model <- full.model[is.na(pmatch(full.model, current.model))]
+      temp.model <- t(combn(complement.current.model, 1))
+      model0 <- NULL
+      for(j in 1:ncol(model.minus))
+      {
+        for(i in 1:nrow(temp.model))
+        {
+          model0 <- cbind(model0, c(temp.model[i, ], model.minus[, j]))
+        }
+      }
+
+
+      for(j in 1:ncol(model0))
+      {
+        temp.gamma <- rep(0, k)
+        temp.gamma[model0[, j]] <- 1
+        set.new.gamma <- cbind(set.new.gamma, temp.gamma)
+      }
+
+    }
+
+    set.new.gamma <- cbind(set.new.gamma, current.gamma)
+    # We add the current model as well
+
+    proposed.model <- apply(set.new.gamma,
+                            2, model)
+    proposed.marginal.likelihood <- as.numeric(apply(set.new.gamma,
+                                                     2, marginal.likelihood))
+
+
+
+    model.matrix <- rbind(model.matrix,
+                          cbind(proposed.model, proposed.marginal.likelihood))
+
+
+    proposed.probability <- proposed.marginal.likelihood
+    # We shall jump to the next model with these proposed probabilities
+    new.gamma.index <- sample(1:ncol(set.new.gamma), size = 1,
+                              prob = proposed.probability)
+
+    new.gamma <- set.new.gamma[, new.gamma.index]
+    new.model <- which(new.gamma == 1)
+    new.model <- paste0(new.model, collapse = "-")
+
+
+    marg.like <- marginal.likelihood(new.gamma)
+    new.marg.like <- marg.like
+
+    model.matrix <- rbind(model.matrix,
+                          cbind(new.model, new.marg.like))
+
+
+    if(new.marg.like >= current.marg.like)
+    {
+      current.gamma     <- new.gamma
+      current.marg.like <- new.marg.like
+    } else {
+      if(runif(1, 0, 1) <=
+         exp((log(new.marg.like) - log(current.marg.like))/current.T))
+      {
+        current.gamma     <- new.gamma
+        current.marg.like <- new.marg.like
+      }
+
+    }
+
+
+
+    error             <- abs(current.marg.like - old.marg.like)
+    current.model     <- which(current.gamma == 1)
+    current.step      <- current.step + 1  # Number of steps
+    # current.T        <- ((Tf - T0)/(nrep - 1)) * (current.step) + T0  # fixes the temperature
+    current.T         <- current.T * C  # fixes the temperature
+    # current.T         <- (k * (log(old.marg.like) -
+    #                            log(current.marg.like)))/log(current.step)
+    current.marg.like <- current.marg.like
+
+
+    trace.matrix[current.step, 1] <- current.step
+    trace.matrix[current.step, 2] <- current.T
+    trace.matrix[current.step, 3] <- current.marg.like
+    trace.matrix[current.step, 4] <- paste0(current.model, collapse = "-")
+
+    cat(trace.matrix[current.step, ], error, "\n")
+
+
+  }
+
+
   while((current.step < nstep) && (error > abstol))
   {
 
@@ -288,7 +403,7 @@ sahpmlm <- function(formula, data, na.action, g = n, nstep = 200, abstol = 0.000
     current.model     <- which(current.gamma == 1)
     current.step      <- current.step + 1  # Number of steps
     current.T         <- current.T * C  # fixes the temperature
-    current.T <- current.T/current.step
+    # current.T <- current.T/current.step
     current.marg.like <- current.marg.like
 
 

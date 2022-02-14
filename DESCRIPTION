@@ -1,5 +1,5 @@
 Package: sahpm
-Title: Variable Selection using Simulated Anneling 
+Title: Variable Selection using Simulated Annealing 
 Version: 0.0.9
 Authors@R: c(person("Arnab", "Maity", email = "arnab.maity@pfizer.com", role = c("aut", "cre")),
              person("Sanjib", "Basu", email = "sbasu@uic.edu", role = c("ctb")))
@@ -8,5 +8,5 @@ Depends: R (>= 3.4)
 Imports: stats, mvtnorm, utils
 License: GPL-2
 Encoding: UTF-8
-LazyData: true
+LazyData: false
 RoxygenNote: 6.1.1

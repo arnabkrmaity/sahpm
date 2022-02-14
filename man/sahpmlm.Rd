@@ -5,7 +5,7 @@
 \title{This implements the stochastic search based on Simulated Anneling strategy.}
 \usage{
 sahpmlm(formula, data, na.action, g = n, nstep = 200, abstol = 1e-07,
-  replace = FALSE)
+  replace = FALSE, burnin = FALSE, nburnin = 50)
 }
 \arguments{
 \item{formula}{an object of class \code{\link{formula}} (or one that can be
@@ -29,6 +29,10 @@ value is \code{NULL}, no action.  Value \code{\link{na.exclude}} can be useful.}
 \item{abstol}{desired level of difference of marginal likelihoods between two steps.}
 
 \item{replace}{logical. If \code{TRUE} the replce step is considered in the search.}
+
+\item{burnin}{logical. If \code{TRUE} the burnin is added. Number of burnin is specified by the next input.}
+
+\item{nburnin}{logical. Number of burnin (required if burnin = TRUE)}
 }
 \value{
 \item{final.model}{A column vector which corresponds to the original
