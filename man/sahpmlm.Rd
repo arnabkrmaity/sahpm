@@ -28,11 +28,11 @@ value is \code{NULL}, no action.  Value \code{\link{na.exclude}} can be useful.}
 
 \item{abstol}{desired level of difference of marginal likelihoods between two steps.}
 
-\item{replace}{logical. If \code{TRUE} the replce step is considered in the search.}
+\item{replace}{logical. If \code{TRUE} the replce step is considered in the search. Default is FALSE.}
 
-\item{burnin}{logical. If \code{TRUE} the burnin is added. Number of burnin is specified by the next input.}
+\item{burnin}{logical. If \code{TRUE} the burnin is added. Default is FALSE. Number of burnin is specified by the next input.}
 
-\item{nburnin}{logical. Number of burnin (required if burnin = TRUE)}
+\item{nburnin}{Number of burnin (required if burnin = TRUE). Default is 50.}
 }
 \value{
 \item{final.model}{A column vector which corresponds to the original
@@ -74,6 +74,24 @@ y <- as.numeric(t(rmvnorm(1, mean = linear.pred, sigma = diag(sigma.square, n)))
                      # response
 answer <- sahpmlm(formula = y ~ x)
 answer$final.model
+answer$history
+
+
+# With small effect size
+beta <- c(rep(0, 10), rep(1, 10), rep(0, 10), rep(1, 10))
+                     # vector of coefficients
+
+linear.pred <- x \%*\% beta
+y <- as.numeric(t(rmvnorm(1, mean = linear.pred, sigma = diag(sigma.square, n))))
+                     # response
+answer <- sahpmlm(formula = y ~ x)
+answer$final.model  # Might miss some of the true predictors
+answer$history
+
+
+# Able to recover all the predictors with 50 burnin
+answer <- sahpmlm(formula = y ~ x, burnin = TRUE, nburnin = 50)
+answer$final.model  # Misses some of the true predictors
 answer$history
 }
 \references{

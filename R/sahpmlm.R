@@ -62,6 +62,24 @@
 #' answer <- sahpmlm(formula = y ~ x)
 #' answer$final.model
 #' answer$history
+#'
+#'
+#' # With small effect size
+#' beta <- c(rep(0, 10), rep(1, 10), rep(0, 10), rep(1, 10))
+#'                      # vector of coefficients
+#'
+#' linear.pred <- x %*% beta
+#' y <- as.numeric(t(rmvnorm(1, mean = linear.pred, sigma = diag(sigma.square, n))))
+#'                      # response
+#' answer <- sahpmlm(formula = y ~ x)
+#' answer$final.model  # Might miss some of the true predictors
+#' answer$history
+#'
+#'
+#' # Able to recover all the predictors with 50 burnin
+#' answer <- sahpmlm(formula = y ~ x, burnin = TRUE, nburnin = 50)
+#' answer$final.model  # Misses some of the true predictors
+#' answer$history
 
 
 sahpmlm <- function(formula, data, na.action, g = n, nstep = 200, abstol = 0.0000001,
@@ -110,7 +128,7 @@ sahpmlm <- function(formula, data, na.action, g = n, nstep = 200, abstol = 0.000
   current.gamma <- rep(0, k)  # gamma (indicator) vector
   # current.gamma <- c(rep(1, 0), rep(0, 10), rep(1, 10), rep(0, 10))
   current.step  <- 1  # Number of steps
-  modelmatrix  <- NULL
+  model.matrix  <- NULL
   trace.matrix <- matrix(NA, nstep, 4)
   # A matrix which contains the history of the algorithm. (By columns: Step number,
   # temperature, current objective function value, current minimal objective
@@ -122,17 +140,20 @@ sahpmlm <- function(formula, data, na.action, g = n, nstep = 200, abstol = 0.000
     return(paste0(which(current.gamma == 1), collapse = "-"))
   }
 
+
+
+if(burnin == TRUE)
+  {
+
   marginal.likelihood <- function(current.gamma)
   { # Returns the log of marginal likelihood given in the article
 
     current.model <- model(current.gamma)
 
-    if(sum(current.model == modelmatrix[, 1]) >= 1)
+    if(sum(current.model == model.matrix[, 1]) >= 1)
     {
 
-      modelmatrix[which(current.model == modelmatrix[, 1]), 2]
-
-      result <- as.numeric(modelmatrix[which(current.model == modelmatrix[, 1]), 2])[1]
+      result <- as.numeric(model.matrix[which(current.model == model.matrix[, 1]), 2])[1]
 
     } else {
 
@@ -147,24 +168,24 @@ sahpmlm <- function(formula, data, na.action, g = n, nstep = 200, abstol = 0.000
 
       if(length(subset) == 0)
       {
-        regression.fit <- stats::lm(y ~ 1)  # Intercept Regression Model
+        regression.fit <- lm(y ~ 1)  # Intercept Regression Model
       } else {
 
-        regression.fit <- stats::lm(y ~ x.sub)  # Regression Model
+        regression.fit <- lm(y ~ x.sub)  # Regression Model
       }
 
       SSE <- regression.fit$residuals %*% regression.fit$residuals
 
 
-      regression.fit0 <- stats::lm(y ~ 1)  # Intercept Regression Model
-      SSE0            <- stats::anova(regression.fit0)[["Sum Sq"]]
+      regression.fit0 <- lm(y ~ 1)  # Intercept Regression Model
+      SSE0            <- anova(regression.fit0)[["Sum Sq"]]
       # Sum of squared errors for Intercept model
 
 
       logB0 <- (-(n - 1)/2) * log(1 + g * (SSE/SSE0)) +
         ((n - k - 1)/2) * log(1 + g)
 
-      result <- -exp(logB0)
+      result <- exp(logB0)
     }
 
     return(as.numeric(result))  # Highest Posterior model
@@ -178,7 +199,7 @@ sahpmlm <- function(formula, data, na.action, g = n, nstep = 200, abstol = 0.000
   current.marg.like <- marg.like
 
 
-  modelmatrix <- cbind(99, current.marg.like)
+  model.matrix <- cbind(99, current.marg.like)
   # This will contain the model and the corresponding marginal likelihood
 
 
@@ -187,8 +208,7 @@ sahpmlm <- function(formula, data, na.action, g = n, nstep = 200, abstol = 0.000
   trace.matrix[1, 3] <- current.marg.like
   trace.matrix[1, 4] <- paste0(current.model, collapse = "-")
 
-
-  for(i in 1:50)  # burn-in 50
+  for(i in 1:nburnin)  # burn-in nburnin
   {
 
     old.marg.like <- current.marg.like
@@ -294,10 +314,182 @@ sahpmlm <- function(formula, data, na.action, g = n, nstep = 200, abstol = 0.000
     trace.matrix[current.step, 3] <- current.marg.like
     trace.matrix[current.step, 4] <- paste0(current.model, collapse = "-")
 
-    cat(trace.matrix[current.step, ], error, "\n")
-
 
   }
+
+
+  while((current.step < nstep) && (error > abstol))
+  {
+
+    old.marg.like <- current.marg.like
+    set.new.gamma <- matrix(current.gamma, nrow = k, ncol = k)
+    # This will contain full set of next gamma's
+
+
+    for(j in 1:k)
+    {
+      set.new.gamma[j, j] <- 1 - current.gamma[j]
+    }
+
+    # Following will create the set \gamma_0 described in the Hans et al article
+    # The other 2 sets are created in the previous loop.
+
+
+    p <- length(current.model)
+
+    if(p != 0)
+    {
+      model.minus <- combn(current.model, (p - 1))
+      full.model <- 1:k
+      complement.current.model <- full.model[is.na(pmatch(full.model, current.model))]
+      temp.model <- t(combn(complement.current.model, 1))
+      model0 <- NULL
+      for(j in 1:ncol(model.minus))
+      {
+        for(i in 1:nrow(temp.model))
+        {
+          model0 <- cbind(model0, c(temp.model[i, ], model.minus[, j]))
+        }
+      }
+
+
+      for(j in 1:ncol(model0))
+      {
+        temp.gamma <- rep(0, k)
+        temp.gamma[model0[, j]] <- 1
+        set.new.gamma <- cbind(set.new.gamma, temp.gamma)
+      }
+
+    }
+
+    set.new.gamma <- cbind(set.new.gamma, current.gamma)
+    # We add the current model as well
+
+    proposed.model <- apply(set.new.gamma,
+                            2, model)
+    proposed.marginal.likelihood <- as.numeric(apply(set.new.gamma,
+                                                     2, marginal.likelihood))
+
+
+
+    model.matrix <- rbind(model.matrix,
+                          cbind(proposed.model, proposed.marginal.likelihood))
+
+
+    proposed.probability <- proposed.marginal.likelihood
+    # We shall jump to the next model with these proposed probabilities
+    new.gamma.index <- sample(1:ncol(set.new.gamma), size = 1,
+                              prob = proposed.probability)
+
+    new.gamma <- set.new.gamma[, new.gamma.index]
+    new.model <- which(new.gamma == 1)
+    new.model <- paste0(new.model, collapse = "-")
+
+
+    marg.like <- marginal.likelihood(new.gamma)
+    new.marg.like <- marg.like
+
+    model.matrix <- rbind(model.matrix,
+                          cbind(new.model, new.marg.like))
+
+
+    if(new.marg.like >= current.marg.like)
+    {
+      current.gamma     <- new.gamma
+      current.marg.like <- new.marg.like
+    } else {
+      if(runif(1, 0, 1) <=
+         exp((log(new.marg.like) - log(current.marg.like))/current.T))
+      {
+        current.gamma     <- new.gamma
+        current.marg.like <- new.marg.like
+      }
+
+    }
+
+
+
+    error             <- abs(current.marg.like - old.marg.like)
+    current.model     <- which(current.gamma == 1)
+    current.step      <- current.step + 1  # Number of steps
+    # current.T        <- ((Tf - T0)/(nrep - 1)) * (current.step) + T0  # fixes the temperature
+    current.T         <- current.T * C  # fixes the temperature
+    # current.T         <- (k * (log(old.marg.like) -
+    #                            log(current.marg.like)))/log(current.step)
+    current.marg.like <- current.marg.like
+
+
+    trace.matrix[current.step, 1] <- current.step
+    trace.matrix[current.step, 2] <- current.T
+    trace.matrix[current.step, 3] <- current.marg.like
+    trace.matrix[current.step, 4] <- paste0(current.model, collapse = "-")
+
+}  # end of while loop
+  } else {
+
+
+    marginal.likelihood <- function(current.gamma)
+    { # Returns the log of marginal likelihood given in the article
+
+      current.model <- model(current.gamma)
+
+      if(sum(current.model == model.matrix[, 1]) >= 1)
+      {
+
+        result <- as.numeric(model.matrix[which(current.model == model.matrix[, 1]), 2])[1]
+
+      } else {
+
+        subset <- which(current.gamma == 1)
+        x.sub <- x[, subset]
+
+        if(is.vector(x.sub)) {
+          x.sub <- matrix(x.sub, ncol=1)
+          k <- 1} else {
+            k <- ncol(x.sub)
+          }
+
+        if(length(subset) == 0)
+        {
+          regression.fit <- stats::lm(y ~ 1)  # Intercept Regression Model
+        } else {
+
+          regression.fit <- stats::lm(y ~ x.sub)  # Regression Model
+        }
+
+        SSE <- regression.fit$residuals %*% regression.fit$residuals
+
+
+        regression.fit0 <- stats::lm(y ~ 1)  # Intercept Regression Model
+        SSE0            <- stats::anova(regression.fit0)[["Sum Sq"]]
+        # Sum of squared errors for Intercept model
+
+
+        logB0 <- (-(n - 1)/2) * log(1 + g * (SSE/SSE0)) +
+          ((n - k - 1)/2) * log(1 + g)
+
+        result <- -exp(logB0)
+      }
+
+      return(as.numeric(result))  # Highest Posterior model
+
+    }
+
+
+    marg.like <- marginal.likelihood(current.gamma)
+
+
+    current.marg.like <- marg.like
+
+
+    model.matrix <- cbind(99, current.marg.like)
+    # This will contain the model and the corresponding marginal likelihood
+
+
+    trace.matrix[1, 1] <- current.step
+    trace.matrix[1, 2] <- current.T
+    trace.matrix[1, 3] <- current.marg.like
+    trace.matrix[1, 4] <- paste0(current.model, collapse = "-")
 
 
   while((current.step < nstep) && (error > abstol))
@@ -360,7 +552,7 @@ sahpmlm <- function(formula, data, na.action, g = n, nstep = 200, abstol = 0.000
 
 
 
-    modelmatrix <- rbind(modelmatrix,
+    model.matrix <- rbind(model.matrix,
                           cbind(proposed.model, proposed.marginal.likelihood))
 
 
@@ -379,7 +571,7 @@ sahpmlm <- function(formula, data, na.action, g = n, nstep = 200, abstol = 0.000
     new.marg.like <- marg.like
     #current.T         <- (k * (new.marg.like - old.marg.like))/log(current.step + 1)
 
-    modelmatrix <- rbind(modelmatrix,
+    model.matrix <- rbind(model.matrix,
                           cbind(new.model, new.marg.like))
 
 
@@ -414,6 +606,7 @@ sahpmlm <- function(formula, data, na.action, g = n, nstep = 200, abstol = 0.000
 
   }
 
+}
   return(list(final.model = current.model, history = trace.matrix[1:current.step, ]))
 
 }
