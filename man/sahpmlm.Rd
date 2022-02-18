@@ -88,11 +88,12 @@ answer <- sahpmlm(formula = y ~ x)
 answer$final.model  # Might miss some of the true predictors
 answer$history
 
-
+\dontrun{
 # Able to recover all the predictors with 50 burnin
 answer <- sahpmlm(formula = y ~ x, burnin = TRUE, nburnin = 50)
 answer$final.model  # Misses some of the true predictors
 answer$history
+}
 }
 \references{
 Maity, A., K., and Basu, S. Efficient Simulated Annealing Method for

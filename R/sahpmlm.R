@@ -75,11 +75,12 @@
 #' answer$final.model  # Might miss some of the true predictors
 #' answer$history
 #'
-#'
+#' \dontrun{
 #' # Able to recover all the predictors with 50 burnin
 #' answer <- sahpmlm(formula = y ~ x, burnin = TRUE, nburnin = 50)
 #' answer$final.model  # Misses some of the true predictors
 #' answer$history
+#' }
 
 
 sahpmlm <- function(formula, data, na.action, g = n, nstep = 200, abstol = 0.0000001,
@@ -168,17 +169,17 @@ if(burnin == TRUE)
 
       if(length(subset) == 0)
       {
-        regression.fit <- lm(y ~ 1)  # Intercept Regression Model
+        regression.fit <- stats::lm(y ~ 1)  # Intercept Regression Model
       } else {
 
-        regression.fit <- lm(y ~ x.sub)  # Regression Model
+        regression.fit <- stats::lm(y ~ x.sub)  # Regression Model
       }
 
       SSE <- regression.fit$residuals %*% regression.fit$residuals
 
 
-      regression.fit0 <- lm(y ~ 1)  # Intercept Regression Model
-      SSE0            <- anova(regression.fit0)[["Sum Sq"]]
+      regression.fit0 <- stats::lm(y ~ 1)  # Intercept Regression Model
+      SSE0            <- stats::anova(regression.fit0)[["Sum Sq"]]
       # Sum of squared errors for Intercept model
 
 
@@ -229,10 +230,10 @@ if(burnin == TRUE)
 
     if(p != 0)
     {
-      model.minus <- combn(current.model, (p - 1))
+      model.minus <- utils::combn(current.model, (p - 1))
       full.model <- 1:k
       complement.current.model <- full.model[is.na(pmatch(full.model, current.model))]
-      temp.model <- t(combn(complement.current.model, 1))
+      temp.model <- t(utils::combn(complement.current.model, 1))
       model0 <- NULL
       for(j in 1:ncol(model.minus))
       {
@@ -288,7 +289,7 @@ if(burnin == TRUE)
       current.gamma     <- new.gamma
       current.marg.like <- new.marg.like
     } else {
-      if(runif(1, 0, 1) <=
+      if(stats::runif(1, 0, 1) <=
          exp((log(new.marg.like) - log(current.marg.like))/current.T))
       {
         current.gamma     <- new.gamma
@@ -339,10 +340,10 @@ if(burnin == TRUE)
 
     if(p != 0)
     {
-      model.minus <- combn(current.model, (p - 1))
+      model.minus <- utils::combn(current.model, (p - 1))
       full.model <- 1:k
       complement.current.model <- full.model[is.na(pmatch(full.model, current.model))]
-      temp.model <- t(combn(complement.current.model, 1))
+      temp.model <- t(utils::combn(complement.current.model, 1))
       model0 <- NULL
       for(j in 1:ncol(model.minus))
       {
@@ -398,7 +399,7 @@ if(burnin == TRUE)
       current.gamma     <- new.gamma
       current.marg.like <- new.marg.like
     } else {
-      if(runif(1, 0, 1) <=
+      if(stats::runif(1, 0, 1) <=
          exp((log(new.marg.like) - log(current.marg.like))/current.T))
       {
         current.gamma     <- new.gamma
