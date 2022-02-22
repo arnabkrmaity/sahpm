@@ -42,7 +42,7 @@ temperature, current objective function value, current minimal objective
 function value, current model, posterior probability of current model.}
 }
 \description{
-Highest posterior model is widely accepeted as a good model among available
+Highest posterior model is widely accepted as a good model among available
 models. In terms of variable selection highest posterior model is often the true
 model. Our stochastic search process SAHPM based on simulated annealing maximization method
 tries to find the highest posterior model by maximizing the model space with
@@ -96,6 +96,6 @@ answer$history
 }
 }
 \references{
-Maity, A., K., and Basu, S. Efficient Simulated Annealing Method for
-Variable Selection in Linear and Non-Linear Models
+Maity, A., K., and Basu, S. Highest Posterior Model Computation and
+Variable Selection via the Simulated Annealing
 }

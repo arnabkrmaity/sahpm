@@ -1,6 +1,6 @@
 #' This implements the stochastic search based on Simulated Anneling strategy.
 #'
-#' Highest posterior model is widely accepeted as a good model among available
+#' Highest posterior model is widely accepted as a good model among available
 #' models. In terms of variable selection highest posterior model is often the true
 #' model. Our stochastic search process SAHPM based on simulated annealing maximization method
 #' tries to find the highest posterior model by maximizing the model space with
@@ -12,8 +12,8 @@
 #' \deqn{y= \alpha + X\beta+\epsilon, \epsilon \sim N(0,\sigma^2)}
 #' The Zellner's \eqn{g} prior is used with default \eqn{g = n}.
 #'
-#' @references Maity, A., K., and Basu, S. Efficient Simulated Annealing Method for
-#' Variable Selection in Linear and Non-Linear Models
+#' @references Maity, A., K., and Basu, S. Highest Posterior Model Computation and
+#' Variable Selection via the Simulated Annealing
 #'
 #' @export
 #'
